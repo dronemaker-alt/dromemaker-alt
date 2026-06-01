@@ -6,7 +6,7 @@ Date: 2026-05-31
 
 DroneLibreFirmwareTools has reached a useful diagnostic milestone. The tool can now interrogate known APM-style boards, attempt unknown serial board scans, perform multi-baud probing, attempt DFU discovery, and fail cleanly when the Windows USB backend is not available.
 
-This milestone was validated on an APM2/ArduCopter board and on an unknown STM-based board from the Nazgul acquisition.
+This milestone was validated on an APM2/ArduCopter board and on unknown STM-based boards from the Nazgul acquisition.
 
 ## Implemented capabilities
 
@@ -33,9 +33,11 @@ Known APM2 board scan produced useful identification output:
 
 This validates that the APM serial parser path is functional.
 
-## Nazgul unknown STM board test case
+## Nazgul unknown STM board test cases
 
 Unknown board source: Nazgul acquisition.
+
+### Unknown STM Board #1
 
 Windows Device Manager showed two related USB interfaces:
 
@@ -54,7 +56,39 @@ Passive serial scan results:
 - INAV detected: false
 - Final status: unknown
 
-Interpretation: Windows sees the board, and the serial interface exists, but the board does not passively emit MAVLink, MSP, or INAV data at the tested baud rates. It may require a command request, a different firmware protocol, or it may currently be in a bootloader/debug state.
+### Unknown STM Board #2
+
+Windows identified the second unknown board as:
+
+- `STMicroelectronics Virtual COM Port (COM16)`
+
+Single-baud scan result:
+
+```json
+{
+  "port": "COM16",
+  "baud": 115200,
+  "usb_device": "STMicroelectronics Virtual COM Port (COM16)",
+  "scanned_at": "2026-06-01T04:11:52Z",
+  "raw_bytes_hex": "",
+  "bytes_count": 0,
+  "mavlink_detected": false,
+  "msp_detected": false,
+  "inav_detected": false,
+  "status": "unknown"
+}
+```
+
+Multi-baud scan results:
+
+- COM16 at 115200: unknown
+- COM16 at 57600: unknown
+- COM16 at 38400: unknown
+- COM16 at 19200: unknown
+
+Interpretation for both unknown STM boards: Windows sees the board and a serial interface exists, but the boards do not passively emit MAVLink, MSP, INAV, or ArduPilot banner data at the tested baud rates. They may require an active command request, a different firmware protocol, Betaflight Configurator interaction, or they may currently be in bootloader/debug states.
+
+The recurring pattern is useful: DroneLibre correctly classifies these boards as alive at USB level but unknown at passive serial protocol level, without falsely identifying them as APM or crashing.
 
 ## Doctor validation result
 
@@ -142,7 +176,7 @@ doctor -> scan-usb -> scan-unknown -> scan-dfu
 This milestone turns DroneLibreFirmwareTools into a practical board triage workflow. The tool can now distinguish between:
 
 - a known APM/ArduCopter serial board,
-- a silent unknown serial board,
+- silent unknown STM serial boards,
 - a Windows-visible DFU-capable board,
 - and a host-side PyUSB/libusb backend problem.
 
