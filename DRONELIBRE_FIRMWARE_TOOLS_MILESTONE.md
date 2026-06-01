@@ -4,9 +4,9 @@ Date: 2026-05-31
 
 ## Summary
 
-DroneLibreFirmwareTools has reached a useful diagnostic milestone. The tool can now interrogate known APM-style boards, attempt unknown serial board scans, perform multi-baud probing, attempt DFU discovery, and fail cleanly when the Windows USB backend is not available.
+DroneLibreFirmwareTools has reached a useful diagnostic milestone. The tool can now interrogate known APM-style boards, attempt unknown serial board scans, perform multi-baud probing, detect MAVLink2 headers on modern ArduPilot-class interfaces, attempt DFU discovery, and fail cleanly when the Windows USB backend is not available.
 
-This milestone was validated on an APM2/ArduCopter board and on unknown STM-based boards from the Nazgul acquisition.
+This milestone was validated on an APM2/ArduCopter board, unknown STM-based boards from the Nazgul acquisition, and an H743-class candidate exposing ArduPilot SLCAN.
 
 ## Implemented capabilities
 
@@ -15,6 +15,7 @@ This milestone was validated on an APM2/ArduCopter board and on unknown STM-base
 - `backup-board` captures APM board information and writes board-specific output.
 - `scan-unknown` probes unknown serial boards for common protocols.
 - `scan-unknown --all-bauds` checks common baud rates: 115200, 57600, 38400, and 19200.
+- `scan-unknown` now recognizes MAVLink v1 (`0xFE`) and MAVLink v2 (`0xFD`) packet headers.
 - `scan-dfu` attempts DFU discovery through PyUSB/libusb.
 - `scan-dfu --debug-backend` prints backend diagnostics before scanning.
 - `doctor` performs a dependency and host-system preflight check.
@@ -90,6 +91,68 @@ Interpretation for both unknown STM boards: Windows sees the board and a serial 
 
 The recurring pattern is useful: DroneLibre correctly classifies these boards as alive at USB level but unknown at passive serial protocol level, without falsely identifying them as APM or crashing.
 
+## H743 candidate / ArduPilot SLCAN test case
+
+A modern H743-class candidate was connected after the APM and unknown STM tests.
+
+The `doctor` command detected two serial ports:
+
+```text
+Serial ports (2): COM18, COM19
+```
+
+### COM18 result
+
+DroneLibre identified the USB device as:
+
+```text
+ArduPilot SLCAN (COM18)
+```
+
+Initial scan received 42 bytes beginning with `0xFD`, but the original scanner did not recognize this as MAVLink. Codex then updated MAVLink detection to recognize MAVLink v2 packet headers.
+
+Validated scan after the fix:
+
+```json
+{
+  "port": "COM18",
+  "baud": 115200,
+  "usb_device": "ArduPilot SLCAN (COM18)",
+  "scanned_at": "2026-06-01T04:34:51Z",
+  "raw_bytes_hex": "fd090000d70101000000000000000403510303c42bfd090000d8010100000000000000040351030343c9",
+  "bytes_count": 42,
+  "mavlink_detected": true,
+  "mavlink_header_detected": true,
+  "mavlink_version": 2,
+  "possible_protocol": "MAVLink2",
+  "msp_detected": false,
+  "inav_detected": false,
+  "status": "unknown"
+}
+```
+
+Interpretation:
+
+- COM18 is not silent.
+- COM18 is exposed as `ArduPilot SLCAN`.
+- Raw data begins with `0xFD`, consistent with MAVLink v2 packet framing.
+- DroneLibre now detects MAVLink2 headers correctly.
+- This appears to be a modern ArduPilot-class interface, likely a CAN/SLCAN-related interface rather than an old APM-style ASCII startup banner.
+
+### COM19 result
+
+COM19 was scanned across multiple baud rates:
+
+- COM19 at 115200: unknown
+- COM19 at 57600: unknown
+- COM19 at 38400: unknown
+- COM19 at 19200: unknown
+
+Interpretation:
+
+- COM19 is present but passive serial probing did not detect MAVLink, MSP, INAV, or banner data.
+- COM18 is the useful discovery interface for this H743 candidate so far.
+
 ## Doctor validation result
 
 The `doctor` command was implemented and validated after fixing a false `pyserial` failure. The package name is `pyserial`, but the correct Python import is `serial`.
@@ -158,6 +221,8 @@ It should filter device names containing:
 - CH340
 - FTDI
 - Silicon Labs
+- ArduPilot
+- SLCAN
 
 It should print a human-readable table and save a JSON report to:
 
@@ -178,6 +243,7 @@ This milestone turns DroneLibreFirmwareTools into a practical board triage workf
 - a known APM/ArduCopter serial board,
 - silent unknown STM serial boards,
 - a Windows-visible DFU-capable board,
+- a modern MAVLink2 / ArduPilot SLCAN interface,
 - and a host-side PyUSB/libusb backend problem.
 
-That distinction matters. It prevents chasing firmware ghosts when the real problem is the host USB plumbing.
+That distinction matters. It prevents chasing firmware ghosts when the real problem is the host USB plumbing, and it also prevents modern MAVLink2 traffic from being mistaken for meaningless binary noise.
