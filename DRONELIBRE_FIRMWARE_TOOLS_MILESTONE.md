@@ -17,6 +17,7 @@ This milestone was validated on an APM2/ArduCopter board and on an unknown STM-b
 - `scan-unknown --all-bauds` checks common baud rates: 115200, 57600, 38400, and 19200.
 - `scan-dfu` attempts DFU discovery through PyUSB/libusb.
 - `scan-dfu --debug-backend` prints backend diagnostics before scanning.
+- `doctor` performs a dependency and host-system preflight check.
 - DFU backend failures are now handled cleanly instead of throwing raw Python tracebacks.
 
 ## APM2 validation result
@@ -55,6 +56,25 @@ Passive serial scan results:
 
 Interpretation: Windows sees the board, and the serial interface exists, but the board does not passively emit MAVLink, MSP, or INAV data at the tested baud rates. It may require a command request, a different firmware protocol, or it may currently be in a bootloader/debug state.
 
+## Doctor validation result
+
+The `doctor` command was implemented and validated after fixing a false `pyserial` failure. The package name is `pyserial`, but the correct Python import is `serial`.
+
+Validated result:
+
+```text
+pyserial: PASS (version=3.5)
+pymavlink: PASS (version=2.4.49)
+pyusb: PASS (version=1.3.1)
+libusb-package: PASS (version=1.0.26.1)
+libusb backend: WARN - libusb backend returned None
+Serial ports (1): COM15
+```
+
+Interpretation: the Python environment, serial stack, MAVLink dependency, PyUSB package, and libusb-package dependency are installed and visible to Python. The remaining issue is specifically the host-side libusb backend initialization path on Windows.
+
+The `doctor` command is now useful as the first preflight check before board interrogation.
+
 ## DFU scan status
 
 The DFU side is visible to Windows as `Camera DFU Device`, but PyUSB/libusb backend initialization is not yet working on the laptop.
@@ -78,31 +98,7 @@ Future work should include either:
 - resolving the Windows libusb backend path/driver binding, or
 - adding a Windows-native USB discovery fallback that uses PowerShell/WMI.
 
-## Recommended next features
-
-### `doctor`
-
-Add a preflight diagnostic command:
-
-```powershell
-python -m src.cli doctor
-```
-
-It should check:
-
-- Python executable path
-- Python version
-- `pyserial` import
-- `pymavlink` import
-- `pyusb` import
-- `libusb_package` import
-- `libusb_package.find_library("libusb-1.0")`
-- `usb.backend.libusb1.get_backend(...)`
-- available serial ports from `serial.tools.list_ports`
-
-It should print PASS/WARN/FAIL lines and never throw a raw traceback.
-
-### `scan-usb`
+## Recommended next feature: `scan-usb`
 
 Add a Windows-visible USB scan command:
 
