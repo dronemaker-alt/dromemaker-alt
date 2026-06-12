@@ -51,6 +51,27 @@ Expected role:
 - handheld field tool prototype
 - future enclosure and battery integration target
 
+## DJI Research & Firmware Resources
+
+### DJI Firmware Tools
+
+Repository:
+https://github.com/o-gs/dji-firmware-tools
+
+Purpose:
+
+- Firmware extraction and analysis
+- Update package inspection
+- Bootloader and filesystem research
+- DJI platform documentation and reverse-engineering reference
+
+Why it matters:
+
+- Assists long-term preservation of older DJI hardware
+- Supports firmware recovery and diagnostics research
+- Provides insight into DJI hardware architecture
+- Useful reference material for future open hardware and software development efforts
+
 ## Repository Layout
 
 ```text
