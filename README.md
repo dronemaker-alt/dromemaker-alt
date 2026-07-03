@@ -28,6 +28,31 @@ The project uses a two-board strategy:
 
 This mirrors professional embedded development, where software and architecture are often proven on expandable hardware before being migrated into a compact product form.
 
+## Current Documentation Package
+
+The project now includes a working documentation spine for the current Drone Libre / field-tool effort:
+
+- [`docs/drone-libre-roadmap.md`](docs/drone-libre-roadmap.md) — repair, companion-system, controller reuse, and open replacement roadmap
+- [`docs/github-maintenance-plan.md`](docs/github-maintenance-plan.md) — repository maintenance and mirror plan
+- [`docs/mirror-index.md`](docs/mirror-index.md) — external references and mirror tracking template
+- [`docs/dji-mini-davey-jones-teardown.md`](docs/dji-mini-davey-jones-teardown.md) — DJI Mini saltwater teardown procedure
+- [`docs/hardware-inventory.md`](docs/hardware-inventory.md) — working hardware inventory snapshot
+
+## Drone Libre Direction
+
+Drone Libre is the broader repair and reuse effort connected to this field tool.
+
+The project emphasizes:
+
+- legitimate drone repair and recovery
+- DJI Mini / Mini 2 hardware documentation
+- companion electronics before flight-critical modification
+- field diagnostics and firmware preservation
+- responsible FAA-compliant drone operation
+- reducing e-waste through reuse and documentation
+
+The current near-term work is focused on documentation, teardown, mirroring useful references, and building repeatable procedures.
+
 ## Current Known Hardware
 
 ### JC-ESP32P4-M3-DEV
@@ -80,7 +105,12 @@ Why it matters:
 │   ├── board-inventory.md
 │   ├── firmware-backup.md
 │   ├── software-architecture.md
-│   └── capstone-notes.md
+│   ├── capstone-notes.md
+│   ├── drone-libre-roadmap.md
+│   ├── github-maintenance-plan.md
+│   ├── mirror-index.md
+│   ├── dji-mini-davey-jones-teardown.md
+│   └── hardware-inventory.md
 ├── hardware/
 │   ├── jc-esp32p4-m3-dev/
 │   └── lilygo-t-display-p4/
@@ -106,6 +136,8 @@ Why it matters:
 4. Build software with a hardware abstraction layer so code can move between boards.
 5. Separate board-specific code from reusable UI, diagnostics, storage, and communications modules.
 6. Track design decisions so the project can support capstone, portfolio, or future product-development use.
+7. Mirror and document external references before they disappear.
+8. Tear down and document Davey Jones as the first DJI Mini forensic teardown case.
 
 ## Long-Term Direction
 
@@ -120,6 +152,8 @@ Possible future system capabilities:
 - offline field troubleshooting procedures
 - modular communications interface
 - secure/professional hardware migration study
+- Drone Libre repair and recovery workflows
+- portable ground-station support
 
 ## Engineering Standard
 
@@ -134,3 +168,5 @@ An engineer reviewing the system should be able to answer:
 - What code is reusable?
 - What risks or tradeoffs are known?
 - How could this evolve into a more professional or certifiable platform?
+- What external references were mirrored and why?
+- What was learned from donor drone teardowns?
