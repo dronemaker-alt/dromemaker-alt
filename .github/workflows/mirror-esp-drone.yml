@@ -1,0 +1,61 @@
+name: Mirror ESP-Drone
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout destination repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Clone source repository
+        run: |
+          rm -rf /tmp/ESP-Drone
+          git clone --depth 1 https://github.com/Circuit-Digest/ESP-Drone.git /tmp/ESP-Drone
+
+      - name: Copy source into mirror folder
+        run: |
+          mkdir -p mirrors/ESP-Drone
+          rsync -a --delete \
+            --exclude '.git' \
+            /tmp/ESP-Drone/ mirrors/ESP-Drone/
+
+      - name: Record mirror metadata
+        run: |
+          mkdir -p mirrors/ESP-Drone
+          SOURCE_SHA=$(git -C /tmp/ESP-Drone rev-parse HEAD)
+          SOURCE_DATE=$(git -C /tmp/ESP-Drone log -1 --format=%cI)
+          cat > mirrors/ESP-Drone/MIRROR-INFO.md <<EOF
+          # ESP-Drone Mirror
+
+          Source repository: https://github.com/Circuit-Digest/ESP-Drone
+
+          Last mirrored source commit: ${SOURCE_SHA}
+
+          Source commit date: ${SOURCE_DATE}
+
+          Mirror workflow: .github/workflows/mirror-esp-drone.yml
+
+          Notes: This folder is a mirror copy for Drone Libre / Drone Companion study. Preserve upstream license files and attribution.
+          EOF
+
+      - name: Commit mirror update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mirrors/ESP-Drone
+          if git diff --cached --quiet; then
+            echo "No mirror changes."
+          else
+            git commit -m "Mirror Circuit-Digest ESP-Drone"
+            git push
+          fi
